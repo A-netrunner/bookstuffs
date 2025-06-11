@@ -6,30 +6,42 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  Dimensions,
 } from "react-native";
 import styles from "../../assets/styles/signup.styles";
 import COLORS from "../../constants/colors";
-import React, { useState } from "react";
+import { useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
-
+// Import the navigation hook
+import { useRouter } from "expo-router"; // Import the router for navigation
+import { useAuthStore } from "../../store/authStore.js"; // Assuming you have a store for authentication
 export default function Signup() {
+  // Hook for navigation
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignUp = () => {};
+  const { user, setUser } = useAuthStore(); // Assuming you have a user store
+
+  console.log("User from store:", user); // Log the user object for debugging
+  const router = useRouter(); // Use the router for navigation
+  const handleSignUp = () => {
+    // Handle sign-up logic here
+    sayHello();
+  };
 
   // Web-specific container styles
-  const webContainerStyle = Platform.OS === 'web' ? {
-    maxWidth: 400,
-    alignSelf: 'center',
-    width: '100%',
-    paddingHorizontal: 20,
-    justifyContent: 'center',
-  } : {};
+  const webContainerStyle =
+    Platform.OS === "web"
+      ? {
+          maxWidth: 400,
+          alignSelf: "center",
+          width: "100%",
+          paddingHorizontal: 20,
+          justifyContent: "center",
+        }
+      : {};
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }}>
@@ -113,9 +125,9 @@ export default function Signup() {
             </View>
 
             {/* submit button */}
-            <TouchableOpacity 
-              style={styles.button} 
-              onPress={handleSignUp} 
+            <TouchableOpacity
+              style={styles.button}
+              onPress={handleSignUp}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -124,6 +136,14 @@ export default function Signup() {
                 <Text style={styles.buttonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account?</Text>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={styles.link}>Login</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>

@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "../Src/models/Users.js";
+import User from "../models/Users.js"; // Adjust the path as necessary
 const router = express.Router();
 const GernerateToken = (userid) => {
   return jwt.sign({ userid }, process.env.JWT_SECRET || "123sdsfr1wd123", {

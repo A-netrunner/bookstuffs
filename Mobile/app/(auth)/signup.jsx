@@ -13,29 +13,37 @@ import { useState } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 // Import the navigation hook
 import { useRouter } from "expo-router"; // Import the router for navigation
-import { useAuthStore } from "../../store/authStore.js"; // Assuming you have a store for authentication
+import { useAuthStore } from "../../store/authStore.js";
+
+
+
 export default function Signup() {
   // Hook for navigation
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const { user, setUser } = useAuthStore(); // Assuming you have a user store
+  const { user, isLoading, register,token } = useAuthStore();
 
-  console.log("User from store:", user); // Log the user object for debugging
-  const router = useRouter(); // Use the router for navigation
-  const handleSignUp = () => {
-    // Handle sign-up logic here
-    sayHello();
+  console.log("User from store:", user); 
+  const router = useRouter();
+  
+  
+  const handleSignUp = async () => {
+   const result = await register(username, email, password);
+   if (result.success) Alert.alert("Error", result.message);
+    
   };
 
+  console.log(user);
+  console.log(token);
   // Web-specific container styles
   const webContainerStyle =
     Platform.OS === "web"
       ? {
           maxWidth: 400,
+
           alignSelf: "center",
           width: "100%",
           paddingHorizontal: 20,

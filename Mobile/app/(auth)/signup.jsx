@@ -6,32 +6,50 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
-  Alert,
 } from "react-native";
 import styles from "../../assets/styles/signup.styles";
 import COLORS from "../../constants/colors";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
-// Import the navigation hook
-import { useRouter } from "expo-router"; // Import the router for navigation
+import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore.js";
+import ErrorMessage from "../../components/ErrorMessage.jsx";
 
 export default function Signup() {
-  // Hook for navigation
+  // State hooks
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { isLoading, register } = useAuthStore();
+  const { isLoading, register, error, successMessage, clearMessages } =
+    useAuthStore();
+
   const router = useRouter();
+
+  // Clear messages when component mounts
+  useEffect(() => {
+    clearMessages();
+  }, []);
 
   // Handle sign up process
   const handleSignUp = async () => {
-    const result = await register(username, email, password);
-    if (!result.success) {
-      Alert.alert("Error", result.message); // Show alert only on failure
+    // Clear previous messages
+    clearMessages();
+
+    // Basic client-side validation
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      // This will be handled by backend, but we can add client-side validation if needed
+      return;
     }
+
+    // Call register function - it will handle errors internally
+    await register(username, email, password);
+  };
+
+  // Handle message dismissal
+  const handleDismissMessage = () => {
+    clearMessages();
   };
 
   // Web-specific container styles
@@ -55,6 +73,25 @@ export default function Signup() {
             <Text style={styles.title}>Bookvers</Text>
             <Text style={styles.subtitle}>Share your fav reads</Text>
           </View>
+
+          {/* Error message */}
+          {error && (
+            <ErrorMessage
+              message={error}
+              success={false}
+              onDismiss={handleDismissMessage}
+            />
+          )}
+
+          {/* Success message */}
+          {successMessage && (
+            <ErrorMessage
+              message={successMessage}
+              success={true}
+              onDismiss={handleDismissMessage}
+            />
+          )}
+
           <View style={styles.formContainer}>
             {/* username input */}
             <View style={styles.inputGroup}>
@@ -75,6 +112,7 @@ export default function Signup() {
                 />
               </View>
             </View>
+
             {/* email input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
@@ -96,6 +134,7 @@ export default function Signup() {
                 />
               </View>
             </View>
+
             {/* password input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>

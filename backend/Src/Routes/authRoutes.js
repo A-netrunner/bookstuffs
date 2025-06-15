@@ -25,13 +25,13 @@ router.post("/register", async (req, res) => {
     }
 
     if (password.length < 3) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "username must be at least 3 characters",
       });
     }
 
     // Check if user already exists
-    const existinguser = await User.findOne({ username});
+    const existinguser = await User.findOne({ username });
     if (existinguser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -66,46 +66,46 @@ router.post("/register", async (req, res) => {
 
 //login route!
 router.post("/login", async (req, res) => {
-try {
-  const {email, password} = req.body;
+  try {
+    const { email, password } = req.body;
 
-  if(!email || !password) {
-    return res.status(400).json({
-      message: "please fill all the fields",
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "please fill all the fields",
+      });
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400)
+        .json({
+          message: "user not found! please recheck"
+        })
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "invalid credentials",
+      });
+    }
+    const token = GernerateToken(user._id);
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePic: user.profilePic,
+      },
     });
+
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "login failed server error" });
   }
-
-  const user = await User.findOne({email});
-
-  if(!user){
-    return res.status(400)
-    .json({
-      message:"user not found! please recheck"
-    })
-  }
-  
-  const isMatch = await user.comparePassword(password);
-  if(!isMatch){
-    return res.status(400).json({
-      message: "invalid credentials",
-    });
-  }
-  const token = GernerateToken(user._id);
-  res.status(200).json({
-    token,
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      profilePic: user.profilePic,
-    },
-  });
-
-
-} catch (error) {
-  console.log(error);
-  res.status(500).json({ message: "login failed server error" });
-}
 });
 
 export default router;

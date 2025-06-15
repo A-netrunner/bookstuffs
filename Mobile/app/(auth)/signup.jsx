@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Alert,
 } from "react-native";
 import styles from "../../assets/styles/signup.styles";
 import COLORS from "../../constants/colors";
@@ -15,8 +16,6 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { useRouter } from "expo-router"; // Import the router for navigation
 import { useAuthStore } from "../../store/authStore.js";
 
-
-
 export default function Signup() {
   // Hook for navigation
   const [username, setUsername] = useState("");
@@ -24,26 +23,22 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const { user, isLoading, register,token } = useAuthStore();
-
-  console.log("User from store:", user); 
+  const { isLoading, register } = useAuthStore();
   const router = useRouter();
-  
-  
+
+  // Handle sign up process
   const handleSignUp = async () => {
-   const result = await register(username, email, password);
-   if (result.success) Alert.alert("Error", result.message);
-    
+    const result = await register(username, email, password);
+    if (!result.success) {
+      Alert.alert("Error", result.message); // Show alert only on failure
+    }
   };
 
-  console.log(user);
-  console.log(token);
   // Web-specific container styles
   const webContainerStyle =
     Platform.OS === "web"
       ? {
           maxWidth: 400,
-
           alignSelf: "center",
           width: "100%",
           paddingHorizontal: 20,

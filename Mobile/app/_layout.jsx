@@ -1,6 +1,3 @@
-// fix the error : (0 , _authStore.default) is not a function
-
-
 import { Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import SafeScreen from "../components/SafeScreen";
@@ -8,24 +5,29 @@ import { StatusBar } from "expo-status-bar";
 import { useRouter } from "expo-router";
 import { useSegments } from "expo-router";
 import { useAuthStore } from "../store/authStore.js";
-import { useEffect } from "react";
-
-
-
+import { useEffect, useState, useLayoutEffect } from "react";
 
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
   console.log("Current segments:", segments);
 
-  const {  checkAuth, user, token } = useAuthStore();
+  const { checkAuth, user, token } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Using useEffect to check authentication after the component mounts
   useEffect(() => {
-    // Check authentication status when the app starts
-     checkAuth();
-  }, []);
+    const authenticate = async () => {
+      await checkAuth(); // Check authentication status
+      setIsLoading(false); // Set loading to false once the check is done
+    };
+    
+    authenticate();
+  }, []); // Only run on initial mount
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (isLoading) return; // Don't redirect until auth check is complete
+
     const isAuthenticated = segments[0] === "(auth)";
     const isSignedIn = user && token;
 
@@ -36,14 +38,14 @@ export default function RootLayout() {
       // If the user is not authenticated and not signed in, redirect to the auth screen
       router.replace("/(auth)");
     }
-  }, [user, token, segments]);
+  }, [user, token, segments, isLoading]); // Only run when auth status is checked and isLoading is false
 
   return (
     <SafeAreaProvider>
       <SafeScreen>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="/(tabs)" />
-          <Stack.Screen name="/(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)" />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark" />

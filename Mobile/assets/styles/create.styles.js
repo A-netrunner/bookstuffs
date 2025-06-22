@@ -136,6 +136,26 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
 });
 
 export default styles;

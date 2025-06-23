@@ -31,121 +31,73 @@ export default function create() {
   const { token } = useAuthStore();
 
   const pickImage = async () => {
-  try {
-    if (Platform.OS === "android" || Platform.OS === "ios") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Camera permission is required to take photos."
-        );
-        return;
+    try {
+      if (Platform.OS === "android" || Platform.OS === "ios") {
+        const { status } =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Required",
+            "Camera permission is required to take photos."
+          );
+          return;
+        }
       }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.5,
+        base64: true,
+        ...(Platform.OS === "web" && {
+          allowsMultipleSelection: false,
+        }),
+      });
+
+      //   if (!result.canceled) {
+      //     setImage(result.assets[0].uri);
+
+      //     if (result.assets[0].base64) {
+      //       setImageBase64(result.assets[0].base64);
+      //     } else {
+      //       const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
+      //         encoding: FileSystem.EncodingType.Base64,
+      //       });
+      //       setImageBase64(base64);
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Error picking image:", error);
+      //   Alert.alert("Error", "Failed to open image picker. Please try again.");
+      // }
+
+      if (!result.canceled) {
+        const selectedAsset = result.assets[0];
+        setImage(selectedAsset.uri);
+
+        // Resize and compress the image
+        const manipulated = await ImageManipulator.manipulateAsync(
+          selectedAsset.uri,
+          [{ resize: { width: 800 } }],
+          {
+            compress: 0.4,
+            format: ImageManipulator.SaveFormat.JPEG,
+            base64: true,
+          }
+        );
+
+        setImageBase64(manipulated.base64);
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
+      Alert.alert("Error", "Failed to open image picker. Please try again.");
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.5,
-      base64: true,
-      ...(Platform.OS === "web" && {
-        allowsMultipleSelection: false,
-      }),
-    });
-
-  //   if (!result.canceled) {
-  //     setImage(result.assets[0].uri);
-
-      
-
-  //     if (result.assets[0].base64) {
-  //       setImageBase64(result.assets[0].base64);
-  //     } else {
-  //       const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
-  //         encoding: FileSystem.EncodingType.Base64,
-  //       });
-  //       setImageBase64(base64);
-  //     }
-  //   }
-  // } catch (error) {
-  //   console.error("Error picking image:", error);
-  //   Alert.alert("Error", "Failed to open image picker. Please try again.");
-  // }
-
-
-if (!result.canceled) {
-      const selectedAsset = result.assets[0];
-      setImage(selectedAsset.uri);
-
-      // Resize and compress the image
-      const manipulated = await ImageManipulator.manipulateAsync(
-        selectedAsset.uri,
-        [{ resize: { width: 800 } }],
-        { compress: 0.4, format: ImageManipulator.SaveFormat.JPEG, base64: true }
-      );
-
-      setImageBase64(manipulated.base64);
-    }
-  } catch (error) {
-    console.error("Error picking image:", error);
-    Alert.alert("Error", "Failed to open image picker. Please try again.");
-  }
-
-
-};
-
+  };
 
   const removeImage = () => {
     setImage(null);
     setImageBase64("");
-  };
-
-  const handelSubmit = async () => {
-    if (!title || !caption || !imageBase64 || !rating) {
-      Alert.alert("Error", "Please fill the fields");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const uriparts = image.split(".");
-      const filetype = uriparts[uriparts.length - 1];
-      const imageType = filetype ? `image/${filetype.toLowerCase()}` : "image/jpeg";
-
-      const imageDataUrl = `data:${imageType};base64,${imageBase64}`;
-
-      const response = await fetch('http://localhost:8000/api/books', {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          caption,
-          rating: rating.toString(),
-          image: imageDataUrl,
-        }),
-      });
-
-      const Data = await response.json();
-      console.log("yippe : ", Data);
-
-      Alert.alert("Success", "Book is posted yippee!!!!");
-      setTitle("");
-      setCaption("");
-      setImage(null);
-      setImageBase64(null);
-      setRating(3);
-      router.push("/");
-    } catch (error) {
-      console.error("Error creating post:", error);
-      Alert.alert("Error", error.message || "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const renderStars = () => {
@@ -168,6 +120,60 @@ if (!result.canceled) {
     );
   };
 
+  const handelSubmit = async () => {
+    if (!title || !caption || !imageBase64 || !rating) {
+      Alert.alert("Error", "Please fill the fields");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const uriparts = image.split(".");
+      const filetype = uriparts[uriparts.length - 1];
+      const imageType = filetype
+        ? `image/${filetype.toLowerCase()}`
+        : "image/jpeg";
+
+      const imageDataUrl = `data:image/jpeg;base64,${imageBase64}`;
+
+
+      const response = await fetch("http://localhost:8000/api/books", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          caption,
+          rating: rating.toString(),
+          image: imageDataUrl,
+        }),
+      });
+
+     const Data = await response.json();
+if (!response.ok) {
+  console.error("❌ Backend error:", Data);
+  throw new Error(Data.message || "Upload failed");
+}
+console.log("✅ Success:", Data);
+
+
+      Alert.alert("Success", "Book is posted yippee!!!!");
+      setTitle("");
+      setCaption("");
+      setImage(null);
+      setImageBase64(null);
+      setRating(3);
+      router.push("/");
+    } catch (error) {
+      console.error("Error creating post:", error);
+      Alert.alert("Error", error.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -218,7 +224,10 @@ if (!result.canceled) {
               <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                 {image ? (
                   <View style={styles.imagePreviewContainer}>
-                    <Image source={{ uri: image }} style={styles.previewImage} />
+                    <Image
+                      source={{ uri: image }}
+                      style={styles.previewImage}
+                    />
                     <TouchableOpacity
                       style={styles.removeImageButton}
                       onPress={removeImage}

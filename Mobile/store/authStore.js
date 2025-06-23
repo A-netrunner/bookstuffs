@@ -17,7 +17,7 @@ export const useAuthStore = create((set, get) => ({
     register: async (username, email, password) => {
         set({ isLoading: true, error: null, successMessage: null }); // Reset previous errors before trying to register
         try {
-            const response = await fetch(`http://localhost:8000/api/auth/register`, {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export const useAuthStore = create((set, get) => ({
     login: async (email, password) => {
         set({ isLoading: true, error: null, successMessage: null }); // Reset previous errors before trying to login
         try {
-            const response = await fetch(`http://localhost:8000/api/auth/login`, {
+            const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,77 +101,7 @@ export const useAuthStore = create((set, get) => ({
         }
     },
 
-    // uploadBook: async (bookData) => {
-    //     const { token, user } = get();
-        
-    //     // Check if user is authenticated
-    //     if (!token || !user) {
-    //         set({ error: 'Please login to upload a book recommendation' });
-    //         return { success: false, message: 'Authentication required' };
-    //     }
-
-    //     set({ uploadingBook: true, error: null, successMessage: null });
-        
-    //     try {
-    //         // Validate required fields based on schema
-    //         const { title, caption, image, rating } = bookData;
-            
-    //         if (!title?.trim()) {
-    //             throw new Error('Book title is required');
-    //         }
-    //         if (!caption?.trim()) {
-    //             throw new Error('Book description is required');
-    //         }
-    //         if (!image) {
-    //             throw new Error('Book cover image is required');
-    //         }
-    //         if (!rating || rating < 1 || rating > 5) {
-    //             throw new Error('Please provide a rating between 1-5 stars');
-    //         }
-
-    //         // Prepare the book data to match schema
-    //         const bookPayload = {
-    //             title: title.trim(),
-    //             caption: caption.trim(),
-    //             image: image, // This could be base64 string or file path
-    //             rating: Number(rating),
-    //             // user field will be set automatically on backend using token
-    //         };
-
-    //         const response = await fetch('http://localhost:8000/api/books/', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${token}`,
-    //             },
-    //             body: JSON.stringify(bookPayload),
-    //         });
-
-    //         if (!response.ok) {
-    //             const errorData = await response.json();
-    //             throw new Error(errorData.message || 'Failed to upload book recommendation');
-    //         }
-
-    //         const data = await response.json();
-
-    //         set({ 
-    //             uploadingBook: false, 
-    //             successMessage: 'Book recommendation uploaded successfully!' 
-    //         });
-            
-    //         console.log('Book upload successful:', data);
-    //         return { success: true, data };
-
-    //     } catch (error) {
-    //         set({
-    //             uploadingBook: false,
-    //             error: error.message
-    //         });
-    //         console.error('Book upload error:', error);
-    //         return { success: false, message: error.message };
-    //     }
-    // },
-
+   
     logout: async () => {
         try {
             // Clear AsyncStorage

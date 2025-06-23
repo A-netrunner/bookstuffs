@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/Users.js";
 import "dotenv/config";
-const JWT_SECRET = "5sfgU3OZO8f+Rw+Cr8R7/f51Q/0cJFQiHoL0R0Nmk84="
+
 const protectRoute = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;

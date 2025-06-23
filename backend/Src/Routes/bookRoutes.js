@@ -3,6 +3,33 @@ import cloudinary from "../lib/cloudinary.js";
 import Book from "../models/Books.js"; // Adjust the path as necessary
 import protectRoute from "../middleware/auth.middleware.js";
 const router = express.Router();
+import streamifier from "streamifier";
+
+
+const streamUpload = async (base64Data) => {
+  const buffer = Buffer.from(
+    base64Data.replace(/^data:image\/\w+;base64,/, ""),
+    "base64"
+  );
+
+
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type: "image" },
+      (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error);
+        }
+      }
+    );
+
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
+};
+
+
 
 router.post("/", protectRoute, async (req, res) => {
   try {
@@ -12,29 +39,34 @@ router.post("/", protectRoute, async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    //upload img to cloudinary
-    const uploadResponse = await cloudinary.uploader.upload(image);
+    console.log("📦 Uploading image to Cloudinary via stream...");
+    const uploadResponse = await streamUpload(image);
     const imageUrl = uploadResponse.secure_url;
 
     const newBook = new Book({
       title,
       caption,
       rating,
-      image: imageUrl, // Save the URL of the uploaded image
+      image: imageUrl,
       user: req.user._id,
-      //
-      //  // Assuming you have user authentication and req.user contains the user ID
     });
-    await newBook.save();
-    res
-      .status(201)
-      .json(newBook);
-  } catch (error) {
-    console.log("Error creating book:", error);
 
-    res.status(500).json({ message: "Error creating book", error });
+    await newBook.save();
+    console.log("✅ Book created:", newBook);
+    res.status(201).json(newBook);
+
+  } catch (error) {
+    console.error("❌ Error uploading book:");
+    console.error(error);
+    res.status(500).json({
+      message: "Error creating book",
+      error: error.message || error,
+    });
   }
 });
+
+
+
 
 router.get("/", protectRoute, async (req, res) => {
   try {

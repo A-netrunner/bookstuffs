@@ -28,7 +28,7 @@ router.post("/", protectRoute, async (req, res) => {
     await newBook.save();
     res
       .status(201)
-      .json({ message: "Book created successfully", book: newBook });
+      .json(newBook);
   } catch (error) {
     console.log("Error creating book:", error);
 
@@ -78,20 +78,20 @@ router.get("/users", protectRoute, async (req, res) => {
 
 router.delete("/:id", protectRoute, async (req, res) => {
   try {
-    const Book = await Book.findById(req.params.id);
-    if (!Book) {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
       return res.status(404).json({ message: "Book not found" });
     }
-    if (Book.user.toString() !== req.user._id.toString()) {
+    if (book.user.toString() !== req.user._id.toString()) {
       return res
         .status(403)
         .json({ message: "You are not authorized to delete this book" });
     }
 
     //delete image from cloudinary before deleting the book(s)
-    if (Book.image && Book.image.include("cloudinary")) {
+    if (book.image && book.image.includes("cloudinary")) {
       try {
-        const publicId = Book.image.split("/").pop().split(".")[0]; // Extract the public ID from the URL
+        const publicId = book.image.split("/").pop().split(".")[0]; // Extract the public ID from the URL
         await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
       } catch (error) {
         console.log("Error deleting image from cloudinary:", error);

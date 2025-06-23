@@ -1,9 +1,11 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import User from "../models/Users.js"; // Adjust the path as necessary
+import User from "../models/Users.js";
+import "dotenv/config";
+
 const router = express.Router();
-const GernerateToken = (userid) => {
-  return jwt.sign({ userid }, process.env.JWT_SECRET || "123sdsfr1wd123", {
+const GernerateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || "5sfgU3OZO8f+Rw+Cr8R7/f51Q/0cJFQiHoL0R0Nmk84=", {
     expiresIn: "1d",
   });
 };

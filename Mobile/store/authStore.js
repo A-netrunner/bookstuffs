@@ -54,8 +54,8 @@ export const useAuthStore = create((set, get) => ({
     checkAuth: async () => {
         try {
             const token = await AsyncStorage.getItem('token');
-            const userJason = await AsyncStorage.getItem('user');
-            const user = userJason ? JSON.parse(userJason) : null;
+            const userJson = await AsyncStorage.getItem('user');
+            const user = userJson ? JSON.parse(userJson) : null;
 
             set({ token, user });
         } catch (error) {

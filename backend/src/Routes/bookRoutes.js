@@ -78,7 +78,7 @@ router.get("/", protectRoute, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("user", "username profilepic"); // Populate the user field with name and email
+      .populate("user", "username profilePic"); // Populate the user field with name and email
 
     const totalbooks = await Book.countDocuments();
 

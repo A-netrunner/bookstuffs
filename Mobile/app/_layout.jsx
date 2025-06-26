@@ -10,7 +10,7 @@ import { useEffect, useState, useLayoutEffect } from "react";
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
-  console.log("Current segments:", segments);
+  
 
   const { checkAuth, user, token } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);

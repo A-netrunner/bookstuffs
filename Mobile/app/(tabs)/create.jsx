@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import styles from "../../assets/styles/create.styles.js";
 import IonIcons from "@expo/vector-icons/Ionicons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import COLORS from "../../constants/colors";
 import * as ImagePicker from "expo-image-picker";
 import { useAuthStore } from "../../store/authStore.js";
@@ -30,12 +31,19 @@ export default function create() {
 
   const { token } = useAuthStore();
 
-  const pickImage = async () => {
+ const pickImage = async () => {
     try {
+      console.log("🖼️ Starting image picker...");
+
       if (Platform.OS === "android" || Platform.OS === "ios") {
+        console.log("📱 Requesting media library permissions...");
         const { status } =
           await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+        console.log("🔐 Permission status:", status);
+
         if (status !== "granted") {
+          console.log("❌ Permission denied");
           Alert.alert(
             "Permission Required",
             "Camera permission is required to take photos."
@@ -44,6 +52,7 @@ export default function create() {
         }
       }
 
+      console.log("🚀 Launching image library...");
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -55,27 +64,23 @@ export default function create() {
         }),
       });
 
-      //   if (!result.canceled) {
-      //     setImage(result.assets[0].uri);
-
-      //     if (result.assets[0].base64) {
-      //       setImageBase64(result.assets[0].base64);
-      //     } else {
-      //       const base64 = await FileSystem.readAsStringAsync(result.assets[0].uri, {
-      //         encoding: FileSystem.EncodingType.Base64,
-      //       });
-      //       setImageBase64(base64);
-      //     }
-      //   }
-      // } catch (error) {
-      //   console.error("Error picking image:", error);
-      //   Alert.alert("Error", "Failed to open image picker. Please try again.");
-      // }
+      console.log("📸 Image picker result:", {
+        canceled: result.canceled,
+        assetsCount: result.assets?.length || 0,
+      });
 
       if (!result.canceled) {
         const selectedAsset = result.assets[0];
+        console.log("🖼️ Selected asset details:", {
+          uri: selectedAsset.uri,
+          width: selectedAsset.width,
+          height: selectedAsset.height,
+          fileSize: selectedAsset.fileSize,
+        });
+
         setImage(selectedAsset.uri);
 
+        console.log("🔄 Starting image manipulation...");
         // Resize and compress the image
         const manipulated = await ImageManipulator.manipulateAsync(
           selectedAsset.uri,
@@ -87,17 +92,30 @@ export default function create() {
           }
         );
 
+        console.log("✨ Image manipulation complete:", {
+          base64Length: manipulated.base64?.length || 0,
+        });
+
         setImageBase64(manipulated.base64);
+        console.log("✅ Image processing successful");
+      } else {
+        console.log("🚫 Image selection canceled by user");
       }
     } catch (error) {
-      console.error("Error picking image:", error);
+      console.error("❌ Error picking image:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+      });
       Alert.alert("Error", "Failed to open image picker. Please try again.");
     }
   };
 
   const removeImage = () => {
+    console.log("🗑️ Removing selected image");
     setImage(null);
     setImageBase64("");
+    console.log("✅ Image removed successfully");
   };
 
   const renderStars = () => {
@@ -107,7 +125,10 @@ export default function create() {
           <TouchableOpacity
             key={star}
             style={styles.starButton}
-            onPress={() => setRating(star)}
+            onPress={() => {
+              console.log(`⭐ Rating set to: ${star}`);
+              setRating(star);
+            }}
           >
             <IonIcons
               name={star <= rating ? "star" : "star-outline"}
@@ -120,60 +141,118 @@ export default function create() {
     );
   };
 
+  const showSuccessAlert = () => {
+    Alert.alert(
+      "🎉 Success!",
+      "Your book recommendation has been published successfully! 📚✨",
+      [
+        {
+          text: "okey",
+          onPress: () => {
+            console.log("✅ User acknowledged success");
+            router.push("/");
+          },
+          style: "default",
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const handelSubmit = async () => {
     if (!title || !caption || !imageBase64 || !rating) {
+      console.log("❌ Form validation failed - missing required fields");
       Alert.alert("Error", "Please fill the fields");
       return;
     }
 
     try {
+      console.log("⏳ Setting loading state to true");
       setLoading(true);
 
+      console.log("🔍 Processing image details...");
       const uriparts = image.split(".");
       const filetype = uriparts[uriparts.length - 1];
       const imageType = filetype
         ? `image/${filetype.toLowerCase()}`
         : "image/jpeg";
 
+      console.log("🖼️ Image processing details:", {
+        originalUri: image,
+        filetype: filetype,
+        imageType: imageType,
+        base64Length: imageBase64?.length || 0,
+      });
+
       const imageDataUrl = `data:image/jpeg;base64,${imageBase64}`;
 
+      const requestBody = {
+        title,
+        caption,
+        rating: rating.toString(),
+        image: imageDataUrl,
+      };
 
-      const response = await fetch("http://localhost:8000/api/books", {
+      console.log("📤 Preparing API request:", {
+        url: `${API_URL}/books`,
+        method: "POST",
+        bodySize: JSON.stringify(requestBody).length,
+        hasToken: !!token,
+      });
+
+      console.log("🌐 Making API call...");
+      const response = await fetch(`${API_URL}/books`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title,
-          caption,
-          rating: rating.toString(),
-          image: imageDataUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-     const Data = await response.json();
-if (!response.ok) {
-  console.error("❌ Backend error:", Data);
-  throw new Error(Data.message || "Upload failed");
-}
-console.log("✅ Success:", Data);
+      const Data = await response.json();
 
+      if (!response.ok) {
+        console.error("❌ Backend error:", {
+          status: response.status,
+          data: Data,
+          message: Data.message || "Unknown error",
+        });
+        throw new Error(Data.message || "Upload failed");
+      }
 
-      Alert.alert("Success", "Book is posted yippee!!!!");
+      console.log("✅ API Success:", Data);
+      console.log("🎉 Upload completed successfully!");
+
+      // Show enhanced success alert
+      showSuccessAlert();
+
+      // Reset form
+      console.log("🔄 Resetting form fields...");
       setTitle("");
       setCaption("");
       setImage(null);
-      setImageBase64(null);
-      setRating(3);
-      router.push("/");
+      setImageBase64("");
+      setRating(0);
+      console.log("✅ Form reset complete");
     } catch (error) {
-      console.error("Error creating post:", error);
-      Alert.alert("Error", error.message || "Something went wrong");
+      console.error("❌ Error creating post:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+
+      Alert.alert(
+        "❌ Upload Failed",
+        error.message || "Something went wrong. Please try again.",
+        [{ text: "OK", style: "default" }]
+      );
     } finally {
+      console.log("🏁 Setting loading state to false");
       setLoading(false);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -207,7 +286,9 @@ console.log("✅ Success:", Data);
                   placeholder="Enter book title"
                   placeholderTextColor={COLORS.placeholderText}
                   value={title}
-                  onChangeText={setTitle}
+                  onChangeText={(text) => {
+                    setTitle(text);
+                  }}
                 />
               </View>
             </View>
@@ -264,7 +345,9 @@ console.log("✅ Success:", Data);
                 placeholder="Tell us what you loved about this book, why you'd recommend it, key themes, or anything that might help others decide if it's for them..."
                 placeholderTextColor={COLORS.placeholderText}
                 value={caption}
-                onChangeText={setCaption}
+                onChangeText={(text) => {
+                  setCaption(text);
+                }}
                 multiline={true}
                 numberOfLines={4}
                 textAlignVertical="top"
@@ -278,14 +361,22 @@ console.log("✅ Success:", Data);
               disabled={loading}
             >
               {loading ? (
-                <Text style={styles.buttonText}>Publishing...</Text>
-              ) : (
                 <>
-                  <IonIcons
-                    name="send-outline"
+                  <FontAwesome
+                    name="spinner"
                     size={20}
                     color={COLORS.white}
-                    style={styles.buttonIcon}
+                    style={[styles.buttonIcon, { marginRight: 8 }]}
+                  />
+                  <Text style={styles.buttonText}>Publishing...</Text>
+                </>
+              ) : (
+                <>
+                  <FontAwesome
+                    name="send"
+                    size={18}
+                    color={COLORS.white}
+                    style={[styles.buttonIcon, { marginRight: 8 }]}
                   />
                   <Text style={styles.buttonText}>Publish your book</Text>
                 </>

@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import  { API_URL } from '../constants/api.js'
-const urAPI = 'http://localhost:8000/api/auth/'; // Base URL for API requests
-
 export const useAuthStore = create((set, get) => ({
     user: null,
     token: null,
@@ -10,7 +8,7 @@ export const useAuthStore = create((set, get) => ({
     error: null,
     successMessage: null,
     uploadingBook: false,
-
+    isCheckingAuth:true,
 
     clearMessages: () => set({ error: null, successMessage: null }), // Clear messages
 
@@ -61,6 +59,8 @@ export const useAuthStore = create((set, get) => ({
         } catch (error) {
             console.error('Error checking authentication:', error);
             set({ error: error.message, user: null, token: null });
+        } finally{
+            set({isCheckingAuth:false})
         }
     },
 

@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { SplashScreen, Stack } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import SafeScreen from "../components/SafeScreen";
 import { StatusBar } from "expo-status-bar";
@@ -6,6 +6,9 @@ import { useRouter } from "expo-router";
 import { useSegments } from "expo-router";
 import { useAuthStore } from "../store/authStore.js";
 import { useEffect, useState, useLayoutEffect } from "react";
+import {useFonts} from "expo-font"
+SplashScreen.preventAutoHideAsync();
+
 
 export default function RootLayout() {
   const router = useRouter();
@@ -13,6 +16,15 @@ export default function RootLayout() {
   
 
   const { checkAuth, user, token } = useAuthStore();
+
+const [fontsLoaded] = useFonts({
+  "JetBrainsMono-Regular": require("../assets/fonts/JetBrainsMono-Regular.ttf"),
+})
+
+useEffect (()=> {
+  if(fontsLoaded) SplashScreen.hideAsync();
+},[fontsLoaded])
+
   const [isLoading, setIsLoading] = useState(true);
 
   // Using useEffect to check authentication after the component mounts
